@@ -2,7 +2,9 @@
 The code for my Rasberry Pi Photo Booth
 
 <p align="center">
+
 ![Rasberry Pi Photo Booth](https://github.com/jibbius/rasberry_pi_photo_booth/blob/master/promo_image.jpg?raw=true)
+
 </p>
 
 # Instructions
