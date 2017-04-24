@@ -1,7 +1,7 @@
 # Rasberry Pi Photo Booth
 The code for my Rasberry Pi Photo Booth
 
-<p align="center"><img alt="Rasberry Pi Photo Booth" src="//github.com/jibbius/rasberry_pi_photo_booth/blob/master/promo_image.jpg?raw=true" /></p>
+<p align="center"><img alt="Rasberry Pi Photo Booth" src="https://github.com/jibbius/rasberry_pi_photo_booth/blob/master/promo_image.jpg?raw=true" /></p>
 
 # Instructions
 1. Build a photo booth (instructions coming soon)
