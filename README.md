@@ -13,4 +13,5 @@ The code for my Rasberry Pi Photo Booth
 5. Photos will get saved to photos directory where you can elect to publish them later.
 
 More detailed instructions available on my blog:
-[jackbarker.com.au/photo-booth/][http://jackbarker.com.au/photo-booth/]
+
+[jackbarker.com.au/photo-booth/](http://jackbarker.com.au/photo-booth/)
