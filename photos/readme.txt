@@ -1,1 +1,0 @@
-Your photos will be saved here.
