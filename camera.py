@@ -2,9 +2,8 @@
 
 #Imports
 import datetime
-from time import sleep
 import os
-import time
+from time import sleep
 from PIL import Image
 
 import RPi.GPIO as GPIO
@@ -93,20 +92,32 @@ def overlay_image(image_path, duration=0, layer=3):
     This function returns an overlay id, which can be used to remove_overlay(id).
     """
 
+    # "The camera’s block size is 32x16 so any image data provided to a renderer must have a width which is a multiple of 32,
+    # and a height which is a multiple of 16."
+    # Refer: http://picamera.readthedocs.io/en/release-1.10/recipes1.html#overlaying-images-on-the-preview
+
     # Load the arbitrarily sized image
     img = Image.open(image_path)
+
     # Create an image padded to the required size with
     # mode 'RGB'
     pad = Image.new('RGB', (
         ((img.size[0] + 31) // 32) * 32,
         ((img.size[1] + 15) // 16) * 16,
-        ))
+    ))
+
     # Paste the original image into the padded one
     pad.paste(img, (0, 0))
 
+    #Get the padded image data
+    try:
+        padded_img_data = pad.tobytes()
+    except AttributeError:
+        padded_img_data = pad.tostring() # Note: tostring() is deprecated in PIL v3.x
+
     # Add the overlay with the padded image as the source,
     # but the original image's dimensions
-    o_id = camera.add_overlay(pad.tostring(), size=img.size)
+    o_id = camera.add_overlay(padded_img_data, size=img.size)
     o_id.layer = layer
 
     if duration > 0:
