@@ -20,7 +20,8 @@ TESTMODE_FAST             = False # Reduced wait between photos and 2 photos onl
 ########################
 ### Variables Config ###
 ########################
-pin_camera_btn = 21 # pin that the button is attached to
+pin_camera_btn = 21 # pin that the 'take photo' button is attached to
+pin_exit_btn   = 13 # pin that the 'exit app' button is attached to (OPTIONAL BUTTON FOR EXITING THE APP)
 total_pics = 4      # number of pics to be taken
 prep_delay = 4      # number of seconds as users prepare to have photo taken
 photo_w = 1920      # take photos at this resolution
@@ -38,6 +39,7 @@ if TESTMODE_FAST:
 #Setup GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(pin_exit_btn  , GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 #Setup Camera
 camera = picamera.PiCamera()
@@ -92,9 +94,11 @@ def overlay_image(image_path, duration=0, layer=3):
     This function returns an overlay id, which can be used to remove_overlay(id).
     """
 
-    # "The camera’s block size is 32x16 so any image data provided to a renderer must have a width which is a multiple of 32,
-    # and a height which is a multiple of 16."
-    # Refer: http://picamera.readthedocs.io/en/release-1.10/recipes1.html#overlaying-images-on-the-preview
+    # "The camera`s block size is 32x16 so any image data
+    #  provided to a renderer must have a width which is a
+    #  multiple of 32, and a height which is a multiple of
+    #  16."
+    #  Refer: http://picamera.readthedocs.io/en/release-1.10/recipes1.html#overlaying-images-on-the-preview
 
     # Load the arbitrarily sized image
     img = Image.open(image_path)
@@ -212,6 +216,10 @@ def main():
 
         #Use falling edge detection to see if button is pushed
         is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
+        exit_button = GPIO.wait_for_edge(pin_exit_btn, GPIO.FALLING, timeout=100)
+
+        if exit_button is not None:
+            return #Exit the photo booth
 
         if TESTMODE_AUTOPRESS_BUTTON:
             is_pressed = True
@@ -264,4 +272,5 @@ if __name__ == "__main__":
 
     finally:
         camera.stop_preview()
+        camera.close()
         GPIO.cleanup()
