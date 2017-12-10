@@ -24,6 +24,7 @@ The code for my Raspberry Pi Photo Booth
 <p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/ieguiguren/raspberry_pi_photo_booth/blob/master/raspiconfig1.png?raw=true" /></p>
 <p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/ieguiguren/raspberry_pi_photo_booth/blob/master/raspiconfig2.png?raw=true" /></p>
 <p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/ieguiguren/raspberry_pi_photo_booth/blob/master/raspiconfig3.png?raw=true" /></p>
+
 You must have camera connected to avoid the error:
 `mmal: mmal_vc_component_create: failed to create component 'vc.ril.camera' (1:ENOMEM)
 mmal: mmal_component_create_core: could not create component 'vc.ril.camera' (1)
@@ -34,8 +35,8 @@ Traceback (most recent call last):
     self._init_camera(camera_num, stereo_mode, stereo_decimate)
   File "/usr/local/lib/python2.7/dist-packages/picamera/camera.py", line 460, in _init_camera
     "Camera is not enabled. Try running 'sudo raspi-config' "
-picamera.exc.PiCameraError: Camera is not enabled. Try running 'sudo raspi-config' and ensure that the camera has been enabled.
-`
+picamera.exc.PiCameraError: Camera is not enabled. Try running 'sudo raspi-config' and ensure that the camera has been enabled.`
+
 8. Run:
 `./camera.py`
 
