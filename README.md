@@ -13,9 +13,9 @@ The code for my Raspberry Pi Photo Booth
 `git clone https://github.com/jibbius/raspberry_pi_photo_booth.git`
 6. Install dependencies:
 `pip install -r requirements.txt`
-5. Run:
+7. Run:
 `python camera.py`
-5. Photos will get saved to photos directory where you can elect to publish them later.
+8. Photos will get saved to photos directory where you can elect to publish them later.
 
 More detailed instructions available on my blog:
 
