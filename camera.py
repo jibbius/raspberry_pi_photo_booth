@@ -41,6 +41,10 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(pin_exit_btn  , GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+#GPIO Debounce Duration
+#(This may help avoid "phantom presses" caused by electronic interference)
+debounce = 0.05 #Min duration (seconds) button is required to be "pressed in" for.
+
 #Setup Camera
 camera = picamera.PiCamera()
 camera.rotation = 270
@@ -211,34 +215,54 @@ def main():
 
     #Wait for someone to push the button
     i = 0
-    blink_speed = 5
+    blink_speed = 10
+
+   #Use falling edge detection to see if button is being pushed in
+    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING)
+    GPIO.add_event_detect(pin_exit_btn,   GPIO.FALLING)
+
     while True:
+        photo_button_is_pressed = None
+        exit_button_is_pressed  = None
 
-        #Use falling edge detection to see if button is pushed
-        is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
-        exit_button = GPIO.wait_for_edge(pin_exit_btn, GPIO.FALLING, timeout=100)
+        if GPIO.event_detected(pin_camera_btn):
+            sleep(debounce)
+            if GPIO.input(pin_camera_btn) == 0:
+                photo_button_is_pressed = True
 
-        if exit_button is not None:
+        if GPIO.event_detected(pin_exit_btn):
+            sleep(debounce)
+            if GPIO.input(pin_exit_btn) == 0:
+                exit_button_is_pressed = True
+
+        if exit_button_is_pressed is not None:
             return #Exit the photo booth
 
         if TESTMODE_AUTOPRESS_BUTTON:
-            is_pressed = True
+            photo_button_is_pressed = True
 
         #Stay inside loop, until button is pressed
-        if is_pressed is None:
-            
-            #After every 5 cycles, alternate the overlay
+        if photo_button_is_pressed is None:
+
+            #After every 10 cycles, alternate the overlay
             i = i+1
             if i==blink_speed:
                 overlay_2.alpha = 255
             elif i==(2*blink_speed):
                 overlay_2.alpha = 0
                 i=0
-            
+
             #Regardless, restart loop
+            sleep(0.1)
             continue
 
         #Button has been pressed!
+
+        #Silence GPIO detection
+        GPIO.remove_event_detect(pin_camera_btn)
+        GPIO.remove_event_detect(pin_exit_btn)
+
+        #Get filenames for images
         filename_prefix = get_base_filename_for_images()
         print("Button pressed! You folks are in for a treat!")
         remove_overlay(overlay_2)
@@ -258,6 +282,8 @@ def main():
         # Otherwise, display intro screen again
         overlay_1 = overlay_image(intro_image_1, 0, 3)
         overlay_2 = overlay_image(intro_image_2, 0, 4)
+        GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING)
+        GPIO.add_event_detect(pin_exit_btn,   GPIO.FALLING)
         print("Press the button to take a photo")
 
 if __name__ == "__main__":
