@@ -5,14 +5,44 @@ The code for my Raspberry Pi Photo Booth (Version 2)
 
 # Instructions
 1. Build a photo booth (see below)
-2. Connect your Pi and PiCamera
-3. Connect a button to the Pi's GPIO21 and Ground pins.
-4. Download the code
-5. Run:
-`python camera.py`
-5. Photos will get saved to photos directory where you can elect to publish them later.
 
-More detailed instructions available on my blog:
+2. Connect your Pi and PiCamera
+
+3. Connect a button to the Pi's GPIO21 and Ground pins.
+
+4. Install git & pip & pillow (which replaces PIL)
+`apt update && apt install git python-pip python-imaging`
+
+5. Clone the code:
+`git clone https://github.com/jibbius/raspberry_pi_photo_booth.git`
+
+6. Install dependencies:
+`pip install -r requirements.txt`
+
+7. Activate picamera in raspi-config:
+`sudo raspi-config`
+<p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/ieguiguren/raspberry_pi_photo_booth/blob/master/raspiconfig1.png?raw=true" /></p>
+<p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/ieguiguren/raspberry_pi_photo_booth/blob/master/raspiconfig2.png?raw=true" /></p>
+<p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/ieguiguren/raspberry_pi_photo_booth/blob/master/raspiconfig3.png?raw=true" /></p>
+
+You must have camera connected to avoid the error:
+`mmal: mmal_vc_component_create: failed to create component 'vc.ril.camera' (1:ENOMEM)
+mmal: mmal_component_create_core: could not create component 'vc.ril.camera' (1)
+Traceback (most recent call last):
+  File "./camera.py", line 45, in <module>
+    camera = picamera.PiCamera()
+  File "/usr/local/lib/python2.7/dist-packages/picamera/camera.py", line 431, in __init__
+    self._init_camera(camera_num, stereo_mode, stereo_decimate)
+  File "/usr/local/lib/python2.7/dist-packages/picamera/camera.py", line 460, in _init_camera
+    "Camera is not enabled. Try running 'sudo raspi-config' "
+picamera.exc.PiCameraError: Camera is not enabled. Try running 'sudo raspi-config' and ensure that the camera has been enabled.`
+
+8. Run:
+`./camera.py`
+
+9. Photos will get saved to photos directory where you can elect to publish them later.
+
+More detailed instructions available on the blog:
 
 [jackbarker.com.au/photo-booth/](http://jackbarker.com.au/photo-booth/)
 
@@ -26,11 +56,11 @@ A special thank you to all those who have submitted issues, and pull requests.
   - Move all config into a separate file.
   - Introduce YAML dependency.
   - Introduce version history.
-  - Updated readme with additional installation instructions (Special thanks: ).
-- 1.2 (2018-01)
-  - Add debounce timer functionality, to prevent accidental button presses due to EM interference (Special thanks: ).
+  - Updated readme with additional installation instructions (Special thanks: ieguiguren).
+- 1.2 (2018-02-28)
+  - Add debounce timer functionality to prevent accidental button presses due to EM interference (Special thanks: André).
 - 1.1 (2018-01)
-  - Correction to Python header (Credit: ).
+  - Correction to Python header (Credit: ieguiguren).
 - 1.0 (2017-05)
   - Initial version.
 

@@ -1,2 +1,5 @@
 photos/*.jpg
-config.yaml
+assets/._*
+._.gitignore
+._*
+.*swp

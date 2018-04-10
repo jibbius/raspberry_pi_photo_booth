@@ -28,7 +28,7 @@ except ImportError as missing_module:
     print(missing_module)
     print('')
     print(' - Please run the following command to resolve:')
-    print('   pip install Pillow ruamel.yaml')
+    print('   pip install -r requirements.txt')
     print('')
     sys_exit()
 
@@ -342,4 +342,4 @@ if __name__ == "__main__":
         CAMERA.stop_preview()
         CAMERA.close()
         GPIO.cleanup()
-        sys.exit()
+        sys_exit()
