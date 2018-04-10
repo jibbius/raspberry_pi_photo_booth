@@ -3,3 +3,4 @@ assets/._*
 ._.gitignore
 ._*
 .*swp
+config.yaml
