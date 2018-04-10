@@ -1,4 +1,2 @@
 photos/*.jpg
-assets/._*
-._.gitignore
-._*
+config.yaml

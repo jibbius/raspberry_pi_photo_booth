@@ -1,56 +1,95 @@
 #!/usr/bin/env python
+"""Raspberry Pi Photo Booth (Version 1.2)
+
+This code is intended to be runs on a Raspberry Pi.
+Currently, both Python 2 and Python 3 are supported.
+
+You can modify the config via [config.yaml].
+"""
+__author__  = 'Jibbius (Jack Barker)'
+__version__ = '2.0'
 
 #Imports
+from time import sleep
+from shutil import copy2
+from sys import exit as sys_exit
 import datetime
 import os
-from time import sleep
-from PIL import Image
 
-import RPi.GPIO as GPIO
-import picamera
+try:
+    from PIL import Image
+    from ruamel import yaml
+    import picamera
+    import RPi.GPIO as GPIO
 
-#############
-### Debug ###
-#############
-# These options allow you to run a quick test of the app.
-# Both options must be set to 'False' when running as proper photobooth
-TESTMODE_AUTOPRESS_BUTTON = False # Button will be pressed automatically, and app will exit after 1 photo cycle
-TESTMODE_FAST             = False # Reduced wait between photos and 2 photos only
+except ImportError as missing_module:
+    print('--------------------------------------------')
+    print('ERROR:')
+    print(missing_module)
+    print('')
+    print(' - Please run the following command to resolve:')
+    print('   pip install Pillow ruamel.yaml')
+    print('')
+    sys_exit()
 
-########################
-### Variables Config ###
-########################
-pin_camera_btn = 21 # pin that the 'take photo' button is attached to
-pin_exit_btn   = 13 # pin that the 'exit app' button is attached to (OPTIONAL BUTTON FOR EXITING THE APP)
-total_pics = 4      # number of pics to be taken
-prep_delay = 4      # number of seconds as users prepare to have photo taken
-photo_w = 1920      # take photos at this resolution
-photo_h = 1152
-screen_w = 800      # resolution of the photo booth display
-screen_h = 480
+#############################
+### Load config from file ###
+#############################
+PATH_TO_CONFIG         = "config.yaml"
+PATH_TO_CONFIG_EXAMPLE = "config.example.yaml"
 
-if TESTMODE_FAST:
-    total_pics = 2     # number of pics to be taken
-    prep_delay = 2     # number of seconds at step 1 as users prep to have photo taken
+#Check if config file exists
+if not os.path.exists(PATH_TO_CONFIG):
+    #Create a new config file, using the example file
+    print("Config file was not found. Creating:" + PATH_TO_CONFIG)
+    copy2(PATH_TO_CONFIG_EXAMPLE, PATH_TO_CONFIG)
+
+#Read config file using YAML interpreter
+with open(PATH_TO_CONFIG, 'r') as stream:
+    CONFIG = {}
+    try:
+        CONFIG = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+try:
+    # Each of the following varibles, is now configured within [config.yaml]:
+    CAMERA_BUTTON_PIN         = CONFIG['CAMERA_BUTTON_PIN'] # pin that the 'take photo' button is attached to
+    EXIT_BUTTON_PIN           = CONFIG['EXIT_BUTTON_PIN']   # pin that the 'exit app' button is attached to (OPTIONAL)
+    TOTAL_PICS                = CONFIG['TOTAL_PICS']     # number of pics to be taken
+    PREP_DELAY                = CONFIG['PREP_DELAY']     # number of seconds as users prepare to have photo taken
+    PHOTO_W                   = CONFIG['PHOTO_W']        # take photos at this resolution (width)
+    PHOTO_H                   = CONFIG['PHOTO_H']        # take photos at this resolution (width)
+    SCREEN_W                  = CONFIG['SCREEN_W']       # resolution of the photo booth display (width)
+    SCREEN_H                  = CONFIG['SCREEN_H']       # resolution of the photo booth display (height)
+    CAMERA_ROTATION           = CONFIG['CAMERA_ROTATION']
+    CAMERA_HFLIP              = CONFIG['CAMERA_HFLIP']
+    DEBOUNCE_TIME             = CONFIG['DEBOUNCE_TIME']
+    TESTMODE_AUTOPRESS_BUTTON = CONFIG['TESTMODE_AUTOPRESS_BUTTON']
+    SAVE_RAW_IMAGES_FOLDER    = CONFIG['SAVE_RAW_IMAGES_FOLDER']
+
+except KeyError as exc:
+    print('')
+    print('ERROR:')
+    print(' - Problems exist within configuration file: [' + PATH_TO_CONFIG + '].')
+    print(' - The expected configuration item ' + str(exc) + ' was not found.')
+    print(' - Please refer to the example file [' + PATH_TO_CONFIG_EXAMPLE + '], for reference.')
+    print('')
+    sys_exit()
 
 ##############################
 ### Setup Objects and Pins ###
 ##############################
 #Setup GPIO
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(pin_exit_btn  , GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(CAMERA_BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(EXIT_BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-#GPIO Debounce Duration
-#(This may help avoid "phantom presses" caused by electronic interference)
-debounce = 0.05 #Min duration (seconds) button is required to be "pressed in" for.
-
-#Setup Camera
-camera = picamera.PiCamera()
-camera.rotation = 270
-camera.annotate_text_size = 80
-camera.resolution = (photo_w, photo_h)
-camera.hflip = True # When preparing for photos, the preview will be flipped horizontally.
+CAMERA = picamera.PiCamera()
+CAMERA.rotation = CAMERA_ROTATION
+CAMERA.annotate_text_size = 80
+CAMERA.resolution = (PHOTO_W, PHOTO_H)
+CAMERA.hflip = CAMERA_HFLIP
 
 ####################
 ### Other Config ###
@@ -62,10 +101,10 @@ REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 ########################
 def print_overlay(string_to_print):
     """
-    Writes a string to both [i] the console, and [ii] camera.annotate_text
+    Writes a string to both [i] the console, and [ii] CAMERA.annotate_text
     """
     print(string_to_print)
-    camera.annotate_text = string_to_print
+    CAMERA.annotate_text = string_to_print
 
 def get_base_filename_for_images():
     """
@@ -78,17 +117,21 @@ def get_base_filename_for_images():
     The example above, will later result in:
     ${ProjectRoot}/photos/2017-12-31_23-59-59_1of4.png, being used as a filename.
     """
-    base_filename = REAL_PATH + '/photos/' + str(datetime.datetime.now()).split('.')[0]
+
+    base_filename = str(datetime.datetime.now()).split('.')[0]
     base_filename = base_filename.replace(' ', '_')
     base_filename = base_filename.replace(':', '-')
-    return base_filename
+
+    base_filepath = REAL_PATH + '/' + SAVE_RAW_IMAGES_FOLDER + '/' + base_filename
+
+    return base_filepath
 
 def remove_overlay(overlay_id):
     """
     If there is an overlay, remove it
     """
     if overlay_id != -1:
-        camera.remove_overlay(overlay_id)
+        CAMERA.remove_overlay(overlay_id)
 
 # overlay one image on screen
 def overlay_image(image_path, duration=0, layer=3):
@@ -107,8 +150,7 @@ def overlay_image(image_path, duration=0, layer=3):
     # Load the arbitrarily sized image
     img = Image.open(image_path)
 
-    # Create an image padded to the required size with
-    # mode 'RGB'
+    # Create an image padded to the required size with mode 'RGB'
     pad = Image.new('RGB', (
         ((img.size[0] + 31) // 32) * 32,
         ((img.size[1] + 15) // 16) * 16,
@@ -125,28 +167,27 @@ def overlay_image(image_path, duration=0, layer=3):
 
     # Add the overlay with the padded image as the source,
     # but the original image's dimensions
-    o_id = camera.add_overlay(padded_img_data, size=img.size)
+    o_id = CAMERA.add_overlay(padded_img_data, size=img.size)
     o_id.layer = layer
 
     if duration > 0:
         sleep(duration)
-        camera.remove_overlay(o_id)
-        return -1 # '-1' indicates there is no overlay
-    else:
-        return o_id # we have an overlay, and will need to remove it later
+        CAMERA.remove_overlay(o_id)
+        o_id = -1 # '-1' indicates there is no overlay
+
+    return o_id # if we have an overlay (o_id > 0), we will need to remove it later
 
 ###############
 ### Screens ###
 ###############
-
 def prep_for_photo_screen(photo_number):
     """
     Prompt the user to get ready for the next photo
     """
 
     #Get ready for the next photo
-    get_ready_image = REAL_PATH + "/assets/get_ready_"+str(photo_number)+".png"
-    overlay_image(get_ready_image, prep_delay)
+    get_ready_image = REAL_PATH + "/assets/get_ready_" + str(photo_number) + ".png"
+    overlay_image(get_ready_image, PREP_DELAY)
 
 def taking_photo(photo_number, filename_prefix):
     """
@@ -154,18 +195,17 @@ def taking_photo(photo_number, filename_prefix):
     """
 
     #get filename to use
-    filename = filename_prefix + '_' + str(photo_number) + 'of'+ str(total_pics)+'.jpg'
+    filename = filename_prefix + '_' + str(photo_number) + 'of'+ str(TOTAL_PICS)+'.jpg'
 
     #countdown from 3, and display countdown on screen
-    for counter in range(3,0,-1):
+    for counter in range(3, 0, -1):
         print_overlay("             ..." + str(counter))
         sleep(1)
 
     #Take still
-    camera.annotate_text = ''
-    camera.capture(filename)
+    CAMERA.annotate_text = ''
+    CAMERA.capture(filename)
     print("Photo (" + str(photo_number) + ") saved: " + filename)
-
 
 def playback_screen(filename_prefix):
     """
@@ -176,24 +216,24 @@ def playback_screen(filename_prefix):
     print("Processing...")
     processing_image = REAL_PATH + "/assets/processing.png"
     overlay_image(processing_image, 2)
-    
+
     #Playback
     prev_overlay = False
-    for photo_number in range(1, total_pics + 1):
-        filename = filename_prefix + '_' + str(photo_number) + 'of'+ str(total_pics)+'.jpg'
-        this_overlay = overlay_image(filename, False, 3+total_pics)
+    for photo_number in range(1, TOTAL_PICS + 1):
+        filename = filename_prefix + '_' + str(photo_number) + 'of'+ str(TOTAL_PICS)+'.jpg'
+        this_overlay = overlay_image(filename, False, (3 + TOTAL_PICS))
         # The idea here, is only remove the previous overlay after a new overlay is added.
         if prev_overlay:
             remove_overlay(prev_overlay)
         sleep(2)
         prev_overlay = this_overlay
+
     remove_overlay(prev_overlay)
-    
+
     #All done
     print("All done!")
     finished_image = REAL_PATH + "/assets/all_done_delayed_upload.png"
     overlay_image(finished_image, 5)
-
 
 def main():
     """
@@ -201,11 +241,13 @@ def main():
     """
 
     #Start Program
-    print("Welcome to the photo booth!")
-    print("Press the button to take a photo")
+    print('Welcome to the photo booth!')
+    print('Use [Ctrl] + [\] to exit')
+    print('')
+    print('Press the \'Take photo\' button to take a photo')
 
     #Start camera preview
-    camera.start_preview(resolution=(screen_w, screen_h))
+    CAMERA.start_preview(resolution=(SCREEN_W, SCREEN_H))
 
     #Display intro screen
     intro_image_1 = REAL_PATH + "/assets/intro_1.png"
@@ -218,21 +260,21 @@ def main():
     blink_speed = 10
 
    #Use falling edge detection to see if button is being pushed in
-    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING)
-    GPIO.add_event_detect(pin_exit_btn,   GPIO.FALLING)
+    GPIO.add_event_detect(CAMERA_BUTTON_PIN, GPIO.FALLING)
+    GPIO.add_event_detect(EXIT_BUTTON_PIN, GPIO.FALLING)
 
     while True:
         photo_button_is_pressed = None
-        exit_button_is_pressed  = None
+        exit_button_is_pressed = None
 
-        if GPIO.event_detected(pin_camera_btn):
-            sleep(debounce)
-            if GPIO.input(pin_camera_btn) == 0:
+        if GPIO.event_detected(CAMERA_BUTTON_PIN):
+            sleep(DEBOUNCE_TIME)
+            if GPIO.input(CAMERA_BUTTON_PIN) == 0:
                 photo_button_is_pressed = True
 
-        if GPIO.event_detected(pin_exit_btn):
-            sleep(debounce)
-            if GPIO.input(pin_exit_btn) == 0:
+        if GPIO.event_detected(EXIT_BUTTON_PIN):
+            sleep(DEBOUNCE_TIME)
+            if GPIO.input(EXIT_BUTTON_PIN) == 0:
                 exit_button_is_pressed = True
 
         if exit_button_is_pressed is not None:
@@ -257,18 +299,18 @@ def main():
             continue
 
         #Button has been pressed!
+        print("Button pressed! You folks are in for a treat!")
 
         #Silence GPIO detection
-        GPIO.remove_event_detect(pin_camera_btn)
-        GPIO.remove_event_detect(pin_exit_btn)
+        GPIO.remove_event_detect(CAMERA_BUTTON_PIN)
+        GPIO.remove_event_detect(EXIT_BUTTON_PIN)
 
         #Get filenames for images
         filename_prefix = get_base_filename_for_images()
-        print("Button pressed! You folks are in for a treat!")
         remove_overlay(overlay_2)
         remove_overlay(overlay_1)
 
-        for photo_number in range(1, total_pics + 1):
+        for photo_number in range(1, TOTAL_PICS + 1):
             prep_for_photo_screen(photo_number)
             taking_photo(photo_number, filename_prefix)
 
@@ -282,8 +324,8 @@ def main():
         # Otherwise, display intro screen again
         overlay_1 = overlay_image(intro_image_1, 0, 3)
         overlay_2 = overlay_image(intro_image_2, 0, 4)
-        GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING)
-        GPIO.add_event_detect(pin_exit_btn,   GPIO.FALLING)
+        GPIO.add_event_detect(CAMERA_BUTTON_PIN, GPIO.FALLING)
+        GPIO.add_event_detect(EXIT_BUTTON_PIN, GPIO.FALLING)
         print("Press the button to take a photo")
 
 if __name__ == "__main__":
@@ -297,6 +339,7 @@ if __name__ == "__main__":
         print("unexpected error: ", str(exception))
 
     finally:
-        camera.stop_preview()
-        camera.close()
+        CAMERA.stop_preview()
+        CAMERA.close()
         GPIO.cleanup()
+        sys.exit()
