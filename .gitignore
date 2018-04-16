@@ -1,6 +1,17 @@
+# Project-specific
 photos/*.jpg
-assets/._*
-._.gitignore
+config.yaml
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Misc
 ._*
 .*swp
-config.yaml
+*.log

@@ -1,12 +1,14 @@
 #!/usr/bin/env python
-"""Raspberry Pi Photo Booth (Version 1.2)
+"""
+Raspberry Pi Photo Booth
 
 This code is intended to be runs on a Raspberry Pi.
-Currently, both Python 2 and Python 3 are supported.
+Currently both Python 2 and Python 3 are supported.
 
 You can modify the config via [config.yaml].
+(The 1st time the code is run [config.yaml] will be created based on [config.example.yaml].
 """
-__author__  = 'Jibbius (Jack Barker)'
+__author__ = 'Jibbius (Jack Barker)'
 __version__ = '2.0'
 
 #Imports
@@ -27,21 +29,22 @@ except ImportError as missing_module:
     print('ERROR:')
     print(missing_module)
     print('')
-    print(' - Please run the following command to resolve:')
+    print(' - Please run the following command(s) to resolve:')
     print('   pip install -r requirements.txt')
+    print('   python3 -m pip install -r requirements.txt')
     print('')
     sys_exit()
 
 #############################
 ### Load config from file ###
 #############################
-PATH_TO_CONFIG         = "config.yaml"
-PATH_TO_CONFIG_EXAMPLE = "config.example.yaml"
+PATH_TO_CONFIG = 'config.yaml'
+PATH_TO_CONFIG_EXAMPLE = 'config.example.yaml'
 
 #Check if config file exists
 if not os.path.exists(PATH_TO_CONFIG):
     #Create a new config file, using the example file
-    print("Config file was not found. Creating:" + PATH_TO_CONFIG)
+    print('Config file was not found. Creating:' + PATH_TO_CONFIG)
     copy2(PATH_TO_CONFIG_EXAMPLE, PATH_TO_CONFIG)
 
 #Read config file using YAML interpreter
@@ -54,19 +57,19 @@ with open(PATH_TO_CONFIG, 'r') as stream:
 
 try:
     # Each of the following varibles, is now configured within [config.yaml]:
-    CAMERA_BUTTON_PIN         = CONFIG['CAMERA_BUTTON_PIN'] # pin that the 'take photo' button is attached to
-    EXIT_BUTTON_PIN           = CONFIG['EXIT_BUTTON_PIN']   # pin that the 'exit app' button is attached to (OPTIONAL)
-    TOTAL_PICS                = CONFIG['TOTAL_PICS']     # number of pics to be taken
-    PREP_DELAY                = CONFIG['PREP_DELAY']     # number of seconds as users prepare to have photo taken
-    PHOTO_W                   = CONFIG['PHOTO_W']        # take photos at this resolution (width)
-    PHOTO_H                   = CONFIG['PHOTO_H']        # take photos at this resolution (width)
-    SCREEN_W                  = CONFIG['SCREEN_W']       # resolution of the photo booth display (width)
-    SCREEN_H                  = CONFIG['SCREEN_H']       # resolution of the photo booth display (height)
-    CAMERA_ROTATION           = CONFIG['CAMERA_ROTATION']
-    CAMERA_HFLIP              = CONFIG['CAMERA_HFLIP']
-    DEBOUNCE_TIME             = CONFIG['DEBOUNCE_TIME']
+    CAMERA_BUTTON_PIN = CONFIG['CAMERA_BUTTON_PIN']
+    EXIT_BUTTON_PIN = CONFIG['EXIT_BUTTON_PIN']
+    TOTAL_PICS = CONFIG['TOTAL_PICS']
+    PREP_DELAY = CONFIG['PREP_DELAY']
+    PHOTO_W = CONFIG['PHOTO_W']
+    PHOTO_H = CONFIG['PHOTO_H']
+    SCREEN_W = CONFIG['SCREEN_W']
+    SCREEN_H = CONFIG['SCREEN_H']
+    CAMERA_ROTATION = CONFIG['CAMERA_ROTATION']
+    CAMERA_HFLIP = CONFIG['CAMERA_HFLIP']
+    DEBOUNCE_TIME = CONFIG['DEBOUNCE_TIME']
     TESTMODE_AUTOPRESS_BUTTON = CONFIG['TESTMODE_AUTOPRESS_BUTTON']
-    SAVE_RAW_IMAGES_FOLDER    = CONFIG['SAVE_RAW_IMAGES_FOLDER']
+    SAVE_RAW_IMAGES_FOLDER = CONFIG['SAVE_RAW_IMAGES_FOLDER']
 
 except KeyError as exc:
     print('')
@@ -141,14 +144,17 @@ def overlay_image(image_path, duration=0, layer=3):
     This function returns an overlay id, which can be used to remove_overlay(id).
     """
 
-    # "The camera`s block size is 32x16 so any image data
-    #  provided to a renderer must have a width which is a
-    #  multiple of 32, and a height which is a multiple of
-    #  16."
-    #  Refer: http://picamera.readthedocs.io/en/release-1.10/recipes1.html#overlaying-images-on-the-preview
-
-    # Load the arbitrarily sized image
+    # Load the (arbitrarily sized) image
     img = Image.open(image_path)
+
+    # "
+    #   The camera`s block size is 32x16 so any image data
+    #   provided to a renderer must have a width which is a
+    #   multiple of 32, and a height which is a multiple of
+    #   16.
+    # "
+    # Refer:
+    # http://picamera.readthedocs.io/en/release-1.10/recipes1.html#overlaying-images-on-the-preview
 
     # Create an image padded to the required size with mode 'RGB'
     pad = Image.new('RGB', (
@@ -186,7 +192,7 @@ def prep_for_photo_screen(photo_number):
     """
 
     #Get ready for the next photo
-    get_ready_image = REAL_PATH + "/assets/get_ready_" + str(photo_number) + ".png"
+    get_ready_image = REAL_PATH + '/assets/get_ready_' + str(photo_number) + '.png'
     overlay_image(get_ready_image, PREP_DELAY)
 
 def taking_photo(photo_number, filename_prefix):
@@ -205,7 +211,7 @@ def taking_photo(photo_number, filename_prefix):
     #Take still
     CAMERA.annotate_text = ''
     CAMERA.capture(filename)
-    print("Photo (" + str(photo_number) + ") saved: " + filename)
+    print('Photo (' + str(photo_number) + ') saved: ' + filename)
 
 def playback_screen(filename_prefix):
     """
@@ -213,8 +219,8 @@ def playback_screen(filename_prefix):
     """
 
     #Processing
-    print("Processing...")
-    processing_image = REAL_PATH + "/assets/processing.png"
+    print('Processing...')
+    processing_image = REAL_PATH + '/assets/processing.png'
     overlay_image(processing_image, 2)
 
     #Playback
@@ -231,8 +237,8 @@ def playback_screen(filename_prefix):
     remove_overlay(prev_overlay)
 
     #All done
-    print("All done!")
-    finished_image = REAL_PATH + "/assets/all_done_delayed_upload.png"
+    print('All done!')
+    finished_image = REAL_PATH + '/assets/all_done_delayed_upload.png'
     overlay_image(finished_image, 5)
 
 def main():
@@ -242,16 +248,18 @@ def main():
 
     #Start Program
     print('Welcome to the photo booth!')
-    print('Use [Ctrl] + [\] to exit')
+    print('(version ' + __version__ + ')')
     print('')
     print('Press the \'Take photo\' button to take a photo')
+    print('Use [Ctrl] + [\\] to exit')
+    print('')
 
     #Start camera preview
     CAMERA.start_preview(resolution=(SCREEN_W, SCREEN_H))
 
     #Display intro screen
-    intro_image_1 = REAL_PATH + "/assets/intro_1.png"
-    intro_image_2 = REAL_PATH + "/assets/intro_2.png"
+    intro_image_1 = REAL_PATH + '/assets/intro_1.png'
+    intro_image_2 = REAL_PATH + '/assets/intro_2.png'
     overlay_1 = overlay_image(intro_image_1, 0, 3)
     overlay_2 = overlay_image(intro_image_2, 0, 4)
 
@@ -288,18 +296,18 @@ def main():
 
             #After every 10 cycles, alternate the overlay
             i = i+1
-            if i==blink_speed:
+            if i == blink_speed:
                 overlay_2.alpha = 255
-            elif i==(2*blink_speed):
+            elif i == (2 * blink_speed):
                 overlay_2.alpha = 0
-                i=0
+                i = 0
 
             #Regardless, restart loop
             sleep(0.1)
             continue
 
         #Button has been pressed!
-        print("Button pressed! You folks are in for a treat!")
+        print('Button pressed! You folks are in for a treat.')
 
         #Silence GPIO detection
         GPIO.remove_event_detect(CAMERA_BUTTON_PIN)
@@ -326,17 +334,14 @@ def main():
         overlay_2 = overlay_image(intro_image_2, 0, 4)
         GPIO.add_event_detect(CAMERA_BUTTON_PIN, GPIO.FALLING)
         GPIO.add_event_detect(EXIT_BUTTON_PIN, GPIO.FALLING)
-        print("Press the button to take a photo")
+        print('Press the button to take a photo')
 
 if __name__ == "__main__":
     try:
         main()
 
     except KeyboardInterrupt:
-        print("goodbye")
-
-    except Exception as exception:
-        print("unexpected error: ", str(exception))
+        print('Goodbye')
 
     finally:
         CAMERA.stop_preview()
