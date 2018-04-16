@@ -5,11 +5,13 @@ This script polls a directory
 import os
 import subprocess
 import sys
-# import argparse
-# import dropbox
+import argparse
+import dropbox
 from shutil import copy2
 from shutil import move
-from time import sleep
+from dropbox.files import WriteMode
+from dropbox.exceptions import ApiError, AuthError, BadInputError
+import time
 
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 INPUT_DIRECTORY      = REAL_PATH + "/photos/"             # Files will be taken from here.
@@ -18,8 +20,9 @@ PROCESSING_DIRECTORY = REAL_PATH + "/photos-processing/"  # Files will temporari
 OUTPUT_DIRECTORY     = REAL_PATH + "/photos-done/"        # Files will be placed in this folder, once all processing is complete.
 COMPRESSION_FACTOR = 90
 FILE_EXT = '.jpg'
+DROPBOX_TOKEN = ''
 
-def required_folders_health_test():
+def health_test_required_folders():
     folders_list=[INPUT_DIRECTORY, BACKUP_DIRECTORY, PROCESSING_DIRECTORY, OUTPUT_DIRECTORY]
     folders_checked=[]
 
@@ -33,6 +36,25 @@ def required_folders_health_test():
         if not os.path.exists(folder):
             print('Creating folder: ' + folder)
             os.makedirs(folder)
+
+def health_test_dropbox():
+        # Check for an access token
+    if (len(DROPBOX_TOKEN) == 0):
+        sys.exit("ERROR: Looks like you didn't add your DROPBOX_TOKEN access token.")
+
+    # Create an instance of a Dropbox class, which can make requests to the API.
+    print("Creating a Dropbox object...")
+    dbx = dropbox.Dropbox(DROPBOX_TOKEN)
+
+    # Check that the access token is valid
+    try:
+        dbx.users_get_current_account()
+    except AuthError as err:
+        sys.exit("ERROR: Invalid DROPBOX token, try re-generating an access token from the app console on the web.")
+    except BadInputError as err:
+        sys.exit("ERROR: Invalid DROPBOX token, try re-generating an access token from the app console on the web.")
+
+    return dbx
 
 def filename_matches_expected_format(f):
     #TODO: Replace the code below with Regex equivalent
@@ -149,8 +171,29 @@ def stopwatch(message):
         t1 = time.time()
         print('Total elapsed time for %s: %.3f' % (message, t1 - t0))
 
-def dropbox_upload(file_path):
-    print('Function is not yet implemented [dropbox_upload]')
+def dropbox_upload(dbx, upload_path, file_path):
+
+    with open(file_path, 'rb') as f:
+        # We use WriteMode=overwrite to make sure that the settings in the file
+        # are changed on upload
+        print("Uploading " + file_path + " to Dropbox as " + upload_path + "...")
+        try:
+            dbx.files_upload(f.read(), upload_path, mode=WriteMode('overwrite'))
+        except ApiError as err:
+            # This checks for the specific error where a user doesn't have
+            # enough Dropbox space quota to upload this file
+            if (err.error.is_path() and
+                    err.error.get_path().reason.is_insufficient_space()):
+                print("ERROR: Cannot back up; insufficient space.")
+                return False
+            elif err.user_message_text:
+                print(err.user_message_text)
+                return False
+            else:
+                print(err)
+                return False
+
+    return True
 
 # def upload(dbx, fullname, folder, subfolder, name, overwrite=False):
 #     """Upload a file.
@@ -181,7 +224,8 @@ def main():
     """
     Main program loop
     """
-    required_folders_health_test()
+    health_test_required_folders()
+    dbx = health_test_dropbox()
 
     while True:
         print('---------------')
@@ -266,7 +310,8 @@ def main():
 
                     for this_file in files_to_upload_to_dropbox:
                         print(' - Uploading to dropbox: ' + this_file)
-                        dropbox_upload(this_file)
+                        upload_path = '/photo-booth/' + os.path.basename(this_file)
+                        dropbox_upload(dbx, upload_path, this_file)
 
                     for this_file in completed_files:
                         print(' - Clean up: ' + this_file)
@@ -281,7 +326,7 @@ def main():
                             #Move file to "Done" folder
                             move(this_file, OUTPUT_DIRECTORY)
 
-        sleep(10)
+        time.sleep(10)
 
 if __name__ == "__main__":
     try:
