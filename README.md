@@ -19,6 +19,8 @@ The code for my Raspberry Pi Photo Booth (Version 2)
 6. Install dependencies:
 `pip install -r requirements.txt`
 
+(Or, if you are using python3: `python3 -m pip install -r requirements.txt`)
+
 7. Activate picamera in raspi-config:
 `sudo raspi-config`
 <p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/ieguiguren/raspberry_pi_photo_booth/blob/master/raspiconfig1.png?raw=true" /></p>
@@ -38,7 +40,7 @@ Traceback (most recent call last):
 picamera.exc.PiCameraError: Camera is not enabled. Try running 'sudo raspi-config' and ensure that the camera has been enabled.`
 
 8. Run:
-`./camera.py`
+`python ./camera.py`
 
 9. Photos will get saved to photos directory where you can elect to publish them later.
 
@@ -58,7 +60,7 @@ A special thank you to all those who have submitted issues, and pull requests.
   - Introduce version history.
   - Updated readme with additional installation instructions (Special thanks: ieguiguren).
 - 1.2 (2018-02-28)
-  - Add debounce timer functionality to prevent accidental button presses due to EM interference (Special thanks: André).
+  - Add debounce timer functionality to prevent accidental button presses due to EM interference (Special thanks: Andre).
 - 1.1 (2018-01)
   - Correction to Python header (Credit: ieguiguren).
 - 1.0 (2017-05)

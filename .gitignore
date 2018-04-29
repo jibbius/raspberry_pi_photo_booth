@@ -1,8 +1,6 @@
-# Project-specific
-photos/*.jpg
-config.yaml
-
-# Environments
+###############
+# Environments:
+###############
 .env
 .venv
 env/
@@ -11,10 +9,19 @@ ENV/
 env.bak/
 venv.bak/
 
-# Misc
+#######
+# Misc:
+#######
 ._*
 .*swp
 *.log
-photos-done/
-photos-processing/
-photos-raw/
+
+###################
+# Project-specific:
+###################
+camera-config.yaml
+photo-processor-config.yaml
+photos/*.jpg
+photos-IN/
+photos-PROCESSING/
+photos-DONE/

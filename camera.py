@@ -5,19 +5,24 @@ Raspberry Pi Photo Booth
 This code is intended to be runs on a Raspberry Pi.
 Currently both Python 2 and Python 3 are supported.
 
-You can modify the config via [config.yaml].
-(The 1st time the code is run [config.yaml] will be created based on [config.example.yaml].
+You can modify the config via [camera-config.yaml].
+(The 1st time the code is run [camera-config.yaml] will be created based on [camera-config.example.yaml].
 """
 __author__ = 'Jibbius (Jack Barker)'
-__version__ = '2.0'
+__version__ = '2.1'
 
-#Imports
+
+#Standard imports
 from time import sleep
 from shutil import copy2
-from sys import exit as sys_exit
+import sys
 import datetime
 import os
 
+#Need to do this early, in case import below fails:
+REAL_PATH = os.path.dirname(os.path.realpath(__file__))
+
+#Additional Imports
 try:
     from PIL import Image
     from ruamel import yaml
@@ -30,16 +35,18 @@ except ImportError as missing_module:
     print(missing_module)
     print('')
     print(' - Please run the following command(s) to resolve:')
-    print('   pip install -r requirements.txt')
-    print('   python3 -m pip install -r requirements.txt')
+    if sys.version_info < (3,0):
+        print('   pip install -r ' + REAL_PATH + '/requirements.txt')
+    else:
+        print('   python3 -m pip install -r ' + REAL_PATH + '/requirements.txt')
     print('')
-    sys_exit()
+    sys.exit()
 
 #############################
 ### Load config from file ###
 #############################
-PATH_TO_CONFIG = 'config.yaml'
-PATH_TO_CONFIG_EXAMPLE = 'config.example.yaml'
+PATH_TO_CONFIG = 'camera-config.yaml'
+PATH_TO_CONFIG_EXAMPLE = 'camera-config.example.yaml'
 
 #Check if config file exists
 if not os.path.exists(PATH_TO_CONFIG):
@@ -55,12 +62,14 @@ with open(PATH_TO_CONFIG, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
+#Required config
 try:
-    # Each of the following varibles, is now configured within [config.yaml]:
+    # Each of the following varibles, is now configured within [camera-config.yaml]:
     CAMERA_BUTTON_PIN = CONFIG['CAMERA_BUTTON_PIN']
     EXIT_BUTTON_PIN = CONFIG['EXIT_BUTTON_PIN']
     TOTAL_PICS = CONFIG['TOTAL_PICS']
     PREP_DELAY = CONFIG['PREP_DELAY']
+    COUNTDOWN = CONFIG['COUNTDOWN']
     PHOTO_W = CONFIG['PHOTO_W']
     PHOTO_H = CONFIG['PHOTO_H']
     SCREEN_W = CONFIG['SCREEN_W']
@@ -78,7 +87,18 @@ except KeyError as exc:
     print(' - The expected configuration item ' + str(exc) + ' was not found.')
     print(' - Please refer to the example file [' + PATH_TO_CONFIG_EXAMPLE + '], for reference.')
     print('')
-    sys_exit()
+    sys.exit()
+
+#Optional config
+COPY_IMAGES_TO = []
+try:
+    if isinstance(CONFIG["COPY_IMAGES_TO"], list):
+        COPY_IMAGES_TO.extend( CONFIG["COPY_IMAGES_TO"] )
+    else:
+        COPY_IMAGES_TO.append( CONFIG["COPY_IMAGES_TO"] )
+
+except KeyError as exc:
+    pass
 
 ##############################
 ### Setup Objects and Pins ###
@@ -94,14 +114,25 @@ CAMERA.annotate_text_size = 80
 CAMERA.resolution = (PHOTO_W, PHOTO_H)
 CAMERA.hflip = CAMERA_HFLIP
 
-####################
-### Other Config ###
-####################
-REAL_PATH = os.path.dirname(os.path.realpath(__file__))
-
 ########################
 ### Helper Functions ###
 ########################
+def health_test_required_folders():
+    folders_list=[SAVE_RAW_IMAGES_FOLDER]
+    folders_list.extend(COPY_IMAGES_TO)
+    folders_checked=[]
+
+    for folder in folders_list:
+        if folder not in folders_checked:
+            folders_checked.append(folder)
+        else:
+            print('ERROR: Cannot use same folder path ('+folder+') twice. Refer config file.')
+
+        #Create folder if doesn't exist
+        if not os.path.exists(folder):
+            print('Creating folder: ' + folder)
+            os.makedirs(folder)
+
 def print_overlay(string_to_print):
     """
     Writes a string to both [i] the console, and [ii] CAMERA.annotate_text
@@ -147,6 +178,13 @@ def overlay_image(image_path, duration=0, layer=3):
     # Load the (arbitrarily sized) image
     img = Image.open(image_path)
 
+    if( img.size[0] > SCREEN_W):
+        # To avoid memory issues associated with large images, we are going to resize image to match our screen's size:
+        basewidth = SCREEN_W
+        wpercent = (basewidth/float(img.size[0]))
+        hsize = int((float(img.size[1])*float(wpercent)))
+        img = img.resize((basewidth,hsize), Image.ANTIALIAS)
+
     # "
     #   The camera`s block size is 32x16 so any image data
     #   provided to a renderer must have a width which is a
@@ -156,8 +194,14 @@ def overlay_image(image_path, duration=0, layer=3):
     # Refer:
     # http://picamera.readthedocs.io/en/release-1.10/recipes1.html#overlaying-images-on-the-preview
 
-    # Create an image padded to the required size with mode 'RGB'
-    pad = Image.new('RGB', (
+    extension = os.path.splitext(image_path)[1][1:]
+    if extension == 'png':
+        mode = 'RGBA'
+    else:
+        mode = 'RGB'
+
+    # Create an image padded to the required size with mode 'RGB' / 'RGBA'
+    pad = Image.new(mode, (
         ((img.size[0] + 31) // 32) * 32,
         ((img.size[1] + 15) // 16) * 16,
     ))
@@ -204,7 +248,7 @@ def taking_photo(photo_number, filename_prefix):
     filename = filename_prefix + '_' + str(photo_number) + 'of'+ str(TOTAL_PICS)+'.jpg'
 
     #countdown from 3, and display countdown on screen
-    for counter in range(3, 0, -1):
+    for counter in range(COUNTDOWN, 0, -1):
         print_overlay("             ..." + str(counter))
         sleep(1)
 
@@ -212,6 +256,7 @@ def taking_photo(photo_number, filename_prefix):
     CAMERA.annotate_text = ''
     CAMERA.capture(filename)
     print('Photo (' + str(photo_number) + ') saved: ' + filename)
+    return filename
 
 def playback_screen(filename_prefix):
     """
@@ -253,6 +298,9 @@ def main():
     print('Press the \'Take photo\' button to take a photo')
     print('Use [Ctrl] + [\\] to exit')
     print('')
+
+    #Setup any required folders (if missing)
+    health_test_required_folders()
 
     #Start camera preview
     CAMERA.start_preview(resolution=(SCREEN_W, SCREEN_H))
@@ -318,12 +366,20 @@ def main():
         remove_overlay(overlay_2)
         remove_overlay(overlay_1)
 
+        photo_filenames = []
         for photo_number in range(1, TOTAL_PICS + 1):
             prep_for_photo_screen(photo_number)
-            taking_photo(photo_number, filename_prefix)
+            fname = taking_photo(photo_number, filename_prefix)
+            photo_filenames.append(fname)
 
         #thanks for playing
         playback_screen(filename_prefix)
+
+        #Save photos into additional folders (for post-processing/backup... etc.)
+        for dest in COPY_IMAGES_TO:
+            for src in photo_filenames:
+                print(src + ' -> ' + dest)
+                copy2(src, dest)
 
         # If we were doing a test run, exit here.
         if TESTMODE_AUTOPRESS_BUTTON:
@@ -347,4 +403,4 @@ if __name__ == "__main__":
         CAMERA.stop_preview()
         CAMERA.close()
         GPIO.cleanup()
-        sys_exit()
+        sys.exit()

@@ -2,7 +2,8 @@
 "CAMERA_BUTTON_PIN" : 21 # GPIO pin that is connected to 'take photo' button
 "EXIT_BUTTON_PIN"   : 13 # GPIO pin that is connected to 'exit' button (optional)
 "TOTAL_PICS"        : 4  # Number of pics to be taken
-"PREP_DELAY"        : 4  # Number of seconds as users prepare to have photo taken
+"PREP_DELAY"        : 4  # Number of seconds as users prepare to have photo taken, before countdown commences
+"COUNTDOWN"         : 3  # Number of seconds to count down from
 
 #GPIO Debounce Duration
 # (This may help avoid "phantom presses" caused by electronic interference)
@@ -11,6 +12,10 @@
 # Take photos at this resolution:
 "PHOTO_W"           : 1920
 "PHOTO_H"           : 1152
+#Note:
+# - The max resolution for PiCamera v2, is: 3280x2464 , assuming you are running the latest firmware.
+# - To upgrade your firmware, please run:
+#   sudo apt-get dist-upgrade
 
 # Resolution of the photo booth display:
 "SCREEN_W"          : 800
@@ -20,8 +25,11 @@
 "CAMERA_ROTATION"   : 270 # Rotation of the camera
 "CAMERA_HFLIP"      : True # When preparing for photos, the preview will be flipped horizontally.
 
-# Folder to save images
+# Primary folder to save images to (required):
 "SAVE_RAW_IMAGES_FOLDER" : "photos"
+
+# Additional locations where images will be saved to (optional):
+# "COPY_IMAGES_TO" : ["photos-IN"]
 
 # Test purposes only:
 "TESTMODE_AUTOPRESS_BUTTON" : False # Should the button be automatically pressed? (only used for testing)
