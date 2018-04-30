@@ -54,6 +54,10 @@ I am happy for anyone to submit issues and pull requests.
 A special thank you to all those who have submitted issues, and pull requests.
 
 # Version History
+- 2.1 (2018-04-30)
+  - Allow "get ready" overlay images, to contain transparent sections.
+  - Previously, when photo resolution was increased an "out of memory" error would occur during playback. Now fixed. (Special thanks: Daniel).
+  - Config moved to `camera-config.yaml`, in anticipation of new functionality ("coming soon").
 - 2.0 (2018-04-10)
   - Move all config into a separate file.
   - Introduce YAML dependency.
