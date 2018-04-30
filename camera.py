@@ -168,7 +168,7 @@ def remove_overlay(overlay_id):
         CAMERA.remove_overlay(overlay_id)
 
 # overlay one image on screen
-def overlay_image(image_path, duration=0, layer=3):
+def overlay_image(image_path, duration=0, layer=3, mode='RGB'):
     """
     Add an overlay (and sleep for an optional duration).
     If sleep duration is not supplied, then overlay will need to be removed later.
@@ -193,12 +193,6 @@ def overlay_image(image_path, duration=0, layer=3):
     # "
     # Refer:
     # http://picamera.readthedocs.io/en/release-1.10/recipes1.html#overlaying-images-on-the-preview
-
-    extension = os.path.splitext(image_path)[1][1:]
-    if extension == 'png':
-        mode = 'RGBA'
-    else:
-        mode = 'RGB'
 
     # Create an image padded to the required size with mode 'RGB' / 'RGBA'
     pad = Image.new(mode, (
@@ -237,7 +231,7 @@ def prep_for_photo_screen(photo_number):
 
     #Get ready for the next photo
     get_ready_image = REAL_PATH + '/assets/get_ready_' + str(photo_number) + '.png'
-    overlay_image(get_ready_image, PREP_DELAY)
+    overlay_image(get_ready_image, PREP_DELAY, 'RGBA')
 
 def taking_photo(photo_number, filename_prefix):
     """
