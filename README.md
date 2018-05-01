@@ -44,6 +44,9 @@ picamera.exc.PiCameraError: Camera is not enabled. Try running 'sudo raspi-confi
 
 9. Photos will get saved to photos directory where you can elect to publish them later.
 
+10. Alternatively, the post-production app can be configured to compress & publish images online.
+`python ./photo-processor.py`
+
 More detailed instructions available on the blog:
 
 [jackbarker.com.au/photo-booth/](http://jackbarker.com.au/photo-booth/)
