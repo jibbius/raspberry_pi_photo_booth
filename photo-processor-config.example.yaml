@@ -19,16 +19,14 @@
 
 # List of print layouts to produce (1 column, 2 column)
 "LAYOUTS" :
-  [
+  1:
     "TILE" : "1x"
     "SIZE" : "1920x1152"
     "MARGIN" : "20"
-  ],[
+  2:
     "TILE" : "2x"
     "SIZE" : "1920x1152"
     "MARGIN" : "20"
-  ]
-
 
 # Dropbox
 "DROPBOX_ENABLED" : False
