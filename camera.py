@@ -231,7 +231,7 @@ def prep_for_photo_screen(photo_number):
 
     #Get ready for the next photo
     get_ready_image = REAL_PATH + '/assets/get_ready_' + str(photo_number) + '.png'
-    overlay_image(get_ready_image, PREP_DELAY, 'RGBA')
+    overlay_image(get_ready_image, PREP_DELAY, 3, 'RGBA')
 
 def taking_photo(photo_number, filename_prefix):
     """
