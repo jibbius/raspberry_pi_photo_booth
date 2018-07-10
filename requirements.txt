@@ -1,2 +1,2 @@
-picamera
+picamera==1.13
 ruamel.yaml
