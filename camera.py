@@ -9,7 +9,7 @@ You can modify the config via [camera-config.yaml].
 (The 1st time the code is run [camera-config.yaml] will be created based on [camera-config.example.yaml].
 """
 __author__ = 'Jibbius (Jack Barker)'
-__version__ = '2.1'
+__version__ = '2.2'
 
 
 #Standard imports
@@ -45,8 +45,8 @@ except ImportError as missing_module:
 #############################
 ### Load config from file ###
 #############################
-PATH_TO_CONFIG = 'camera-config.yaml'
-PATH_TO_CONFIG_EXAMPLE = 'camera-config.example.yaml'
+PATH_TO_CONFIG = REAL_PATH + '/camera-config.yaml'
+PATH_TO_CONFIG_EXAMPLE = REAL_PATH + '/camera-config.example.yaml'
 
 #Check if config file exists
 if not os.path.exists(PATH_TO_CONFIG):
