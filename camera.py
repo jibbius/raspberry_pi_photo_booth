@@ -18,29 +18,33 @@ from shutil import copy2
 import sys
 import datetime
 import os
+import glob
+import random
 
 #Need to do this early, in case import below fails:
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 
 #Additional Imports
-try:
-    from PIL import Image
-    from ruamel import yaml
-    import picamera
-    import RPi.GPIO as GPIO
+# try:
+from PIL import Image
+from ruamel import yaml
+# import picamera
+# import RPi.GPIO as GPIO
 
-except ImportError as missing_module:
-    print('--------------------------------------------')
-    print('ERROR:')
-    print(missing_module)
-    print('')
-    print(' - Please run the following command(s) to resolve:')
-    if sys.version_info < (3,0):
-        print('   pip install -r ' + REAL_PATH + '/requirements.txt')
-    else:
-        print('   python3 -m pip install -r ' + REAL_PATH + '/requirements.txt')
-    print('')
-    sys.exit()
+# except ImportError as missing_module:
+#     print('--------------------------------------------')
+#     print('ERROR:')
+#     print(missing_module)
+#     print('')
+#     print(' - Please run the following command(s) to resolve:')
+#     if sys.version_info < (3,0):
+#         print('   pip install -r ' + REAL_PATH + '/requirements.txt')
+#     else:
+#         print('   python3 -m pip install -r ' + REAL_PATH + '/requirements.txt')
+#     print('')
+#     sys.exit()
+
+GPIO = {}
 
 #############################
 ### Load config from file ###
@@ -220,6 +224,7 @@ def overlay_image(image_path, duration=0, layer=3, mode='RGB'):
         o_id = -1 # '-1' indicates there is no overlay
 
     return o_id # if we have an overlay (o_id > 0), we will need to remove it later
+    # return random.randrange(10000)
 
 ###############
 ### Screens ###
@@ -280,6 +285,29 @@ def playback_screen(filename_prefix):
     finished_image = REAL_PATH + '/assets/all_done_delayed_upload.png'
     overlay_image(finished_image, 5)
 
+def random_photo_path():
+    photos_path = REAL_PATH + '/photos/*.jpg'
+    photos = glob.glob(photos_path)
+    if len(photos) > 0:
+        return random.choice(photos)
+    else:
+        return None
+
+def load_display_images():
+    intro_image_1 = REAL_PATH + '/assets/intro_1.png'
+    intro_image_2 = REAL_PATH + '/assets/intro_2.png'
+    intro_images = [intro_image_1, intro_image_2]
+
+    images = [intro_image_2]
+    # add 5 photos if they exist otherwise just intros
+    for i in range(5):
+        random_photo = random_photo_path()
+        if random_photo is not None:
+            images.append(random_photo)
+        else:
+            images.append(random.choice(intro_images))
+    return images
+
 def main():
     """
     Main program loop
@@ -299,92 +327,102 @@ def main():
     #Start camera preview
     CAMERA.start_preview(resolution=(SCREEN_W, SCREEN_H))
 
-    #Display intro screen
-    intro_image_1 = REAL_PATH + '/assets/intro_1.png'
-    intro_image_2 = REAL_PATH + '/assets/intro_2.png'
-    overlay_1 = overlay_image(intro_image_1, 0, 3)
-    overlay_2 = overlay_image(intro_image_2, 0, 4)
-
-    #Wait for someone to push the button
-    i = 0
-    blink_speed = 10
-
    #Use falling edge detection to see if button is being pushed in
     GPIO.add_event_detect(CAMERA_BUTTON_PIN, GPIO.FALLING)
     GPIO.add_event_detect(EXIT_BUTTON_PIN, GPIO.FALLING)
 
-    while True:
-        photo_button_is_pressed = None
-        exit_button_is_pressed = None
+    #Wait for someone to push the button
+    i = 0
+    current_image = None
+    current_image_id = None
+    swap_cycles = 20
+    display_images = []
 
-        if GPIO.event_detected(CAMERA_BUTTON_PIN):
-            sleep(DEBOUNCE_TIME)
-            if GPIO.input(CAMERA_BUTTON_PIN) == 0:
+    try:
+        while True:
+            photo_button_is_pressed = None
+            exit_button_is_pressed = None
+
+            if GPIO.event_detected(CAMERA_BUTTON_PIN):
+                sleep(DEBOUNCE_TIME)
+                if GPIO.input(CAMERA_BUTTON_PIN) == 0:
+                    photo_button_is_pressed = True
+
+            if GPIO.event_detected(EXIT_BUTTON_PIN):
+                sleep(DEBOUNCE_TIME)
+                if GPIO.input(EXIT_BUTTON_PIN) == 0:
+                    exit_button_is_pressed = True
+
+            if exit_button_is_pressed is not None:
+                return #Exit the photo booth
+
+            if TESTMODE_AUTOPRESS_BUTTON:
                 photo_button_is_pressed = True
 
-        if GPIO.event_detected(EXIT_BUTTON_PIN):
-            sleep(DEBOUNCE_TIME)
-            if GPIO.input(EXIT_BUTTON_PIN) == 0:
-                exit_button_is_pressed = True
+            #Stay inside loop, until button is pressed
+            if photo_button_is_pressed is None:
 
-        if exit_button_is_pressed is not None:
-            return #Exit the photo booth
+                #After every 10 cycles switch images
+                i = i+1
+                if i == swap_cycles or current_image is None:
+                    image_id_to_remove = current_image_id
+                    if len(display_images) == 0:
+                        print("loading new display images")
+                        display_images = load_display_images()
+                    current_image = display_images[0]
+                    display_images = display_images[1:]
 
-        if TESTMODE_AUTOPRESS_BUTTON:
-            photo_button_is_pressed = True
+                    current_image_id = overlay_image(current_image, 0, 4)
+                    print("overlaying image_id: "+ str(current_image_id) + " image: " + current_image  )
+                    if image_id_to_remove is not None:
+                        print("removing image_id: " + str(image_id_to_remove))
+                        remove_overlay(image_id_to_remove)
+                    i = 0
 
-        #Stay inside loop, until button is pressed
-        if photo_button_is_pressed is None:
+                #Regardless, restart loop
+                sleep(0.1)
+                continue
 
-            #After every 10 cycles, alternate the overlay
-            i = i+1
-            if i == blink_speed:
-                overlay_2.alpha = 255
-            elif i == (2 * blink_speed):
-                overlay_2.alpha = 0
-                i = 0
+            #Button has been pressed!
+            print('Button pressed! You folks are in for a treat.')
 
-            #Regardless, restart loop
-            sleep(0.1)
-            continue
+            #Silence GPIO detection
+            GPIO.remove_event_detect(CAMERA_BUTTON_PIN)
+            GPIO.remove_event_detect(EXIT_BUTTON_PIN)
 
-        #Button has been pressed!
-        print('Button pressed! You folks are in for a treat.')
+            #Get filenames for images
+            filename_prefix = get_base_filename_for_images()
+            # remove_overlay(overlay_2)
+            # remove_overlay(overlay_1)
 
-        #Silence GPIO detection
-        GPIO.remove_event_detect(CAMERA_BUTTON_PIN)
-        GPIO.remove_event_detect(EXIT_BUTTON_PIN)
+            photo_filenames = []
+            for photo_number in range(1, TOTAL_PICS + 1):
+                prep_for_photo_screen(photo_number)
+                fname = taking_photo(photo_number, filename_prefix)
+                photo_filenames.append(fname)
 
-        #Get filenames for images
-        filename_prefix = get_base_filename_for_images()
-        remove_overlay(overlay_2)
-        remove_overlay(overlay_1)
+            #thanks for playing
+            playback_screen(filename_prefix)
 
-        photo_filenames = []
-        for photo_number in range(1, TOTAL_PICS + 1):
-            prep_for_photo_screen(photo_number)
-            fname = taking_photo(photo_number, filename_prefix)
-            photo_filenames.append(fname)
+            #Save photos into additional folders (for post-processing/backup... etc.)
+            for dest in COPY_IMAGES_TO:
+                for src in photo_filenames:
+                    print(src + ' -> ' + dest)
+                    copy2(src, dest)
 
-        #thanks for playing
-        playback_screen(filename_prefix)
+            # If we were doing a test run, exit here.
+            if TESTMODE_AUTOPRESS_BUTTON:
+                break
 
-        #Save photos into additional folders (for post-processing/backup... etc.)
-        for dest in COPY_IMAGES_TO:
-            for src in photo_filenames:
-                print(src + ' -> ' + dest)
-                copy2(src, dest)
+            # Otherwise, display intro screen again
+            # overlay_1 = overlay_image(intro_image_1, 0, 3)
+            # overlay_2 = overlay_image(intro_image_2, 0, 4)
+            GPIO.add_event_detect(CAMERA_BUTTON_PIN, GPIO.FALLING)
+            GPIO.add_event_detect(EXIT_BUTTON_PIN, GPIO.FALLING)
+            print('Press the button to take a photo')
+    except:
+        print(sys.exc_info())
 
-        # If we were doing a test run, exit here.
-        if TESTMODE_AUTOPRESS_BUTTON:
-            break
-
-        # Otherwise, display intro screen again
-        overlay_1 = overlay_image(intro_image_1, 0, 3)
-        overlay_2 = overlay_image(intro_image_2, 0, 4)
-        GPIO.add_event_detect(CAMERA_BUTTON_PIN, GPIO.FALLING)
-        GPIO.add_event_detect(EXIT_BUTTON_PIN, GPIO.FALLING)
-        print('Press the button to take a photo')
 
 if __name__ == "__main__":
     try:

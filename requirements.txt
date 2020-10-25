@@ -1,2 +1,2 @@
 picamera==1.13
-ruamel.yaml==0.14.12
+ruamel.yaml==0.16.12
