@@ -25,26 +25,24 @@ import random
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 
 #Additional Imports
-# try:
-from PIL import Image
-from ruamel import yaml
-# import picamera
-# import RPi.GPIO as GPIO
+try:
+    from PIL import Image
+    from ruamel import yaml
+    import picamera
+    import RPi.GPIO as GPIO
 
-# except ImportError as missing_module:
-#     print('--------------------------------------------')
-#     print('ERROR:')
-#     print(missing_module)
-#     print('')
-#     print(' - Please run the following command(s) to resolve:')
-#     if sys.version_info < (3,0):
-#         print('   pip install -r ' + REAL_PATH + '/requirements.txt')
-#     else:
-#         print('   python3 -m pip install -r ' + REAL_PATH + '/requirements.txt')
-#     print('')
-#     sys.exit()
-
-GPIO = {}
+except ImportError as missing_module:
+    print('--------------------------------------------')
+    print('ERROR:')
+    print(missing_module)
+    print('')
+    print(' - Please run the following command(s) to resolve:')
+    if sys.version_info < (3,0):
+        print('   pip install -r ' + REAL_PATH + '/requirements.txt')
+    else:
+        print('   python3 -m pip install -r ' + REAL_PATH + '/requirements.txt')
+    print('')
+    sys.exit()
 
 #############################
 ### Load config from file ###
