@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=camera.py
+Comment=Raspberry Pi Photo Booth
+NoDisplay=false
+Exec=python3 /home/pi/photo-booth/camera.py
+NotShowIn=GNOME;KDE;XFCE;
+Name[en_US]= camera.py

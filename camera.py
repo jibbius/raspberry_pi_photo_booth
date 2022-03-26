@@ -19,15 +19,16 @@ import sys
 import datetime
 import os
 
+
 #Need to do this early, in case import below fails:
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 
 #Additional Imports
 try:
     from PIL import Image
-    from ruamel import yaml
     import picamera
     import RPi.GPIO as GPIO
+    import yaml
 
 except ImportError as missing_module:
     print('--------------------------------------------')

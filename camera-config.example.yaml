@@ -9,6 +9,13 @@
 # (This may help avoid "phantom presses" caused by electronic interference)
 "DEBOUNCE_TIME"     : 0.05 # Min duration (seconds) button is required to be "pressed in" for.
 
+# Resolution of the photo booth display:
+"SCREEN_W"          : 800
+"SCREEN_H"          : 480
+#Note:
+# - Typical resolution of 5" screen: 800 x 480
+# - Typical resolution of 7" screen: 1024 x 600
+
 # Take photos at this resolution:
 "PHOTO_W"           : 1920
 "PHOTO_H"           : 1152
@@ -16,10 +23,6 @@
 # - The max resolution for PiCamera v2, is: 3280x2464 , assuming you are running the latest firmware.
 # - To upgrade your firmware, please run:
 #   sudo apt-get dist-upgrade
-
-# Resolution of the photo booth display:
-"SCREEN_W"          : 800
-"SCREEN_H"          : 480
 
 # Camera setup
 "CAMERA_ROTATION"   : 270 # Rotation of the camera
@@ -30,6 +33,8 @@
 
 # Additional locations where images will be saved to (optional):
 # "COPY_IMAGES_TO" : ["photos-IN"]
+# WARNING: THE ABOVE CAUSES AN ISSUE WITH AUTOSTART.
+# TODO: FixMe
 
 # Test purposes only:
 "TESTMODE_AUTOPRESS_BUTTON" : False # Should the button be automatically pressed? (only used for testing)

@@ -3,6 +3,10 @@ The code for my Raspberry Pi Photo Booth (Version 2)
 
 <p align="center"><img alt="Raspberry Pi Photo Booth" src="https://github.com/jibbius/raspberry_pi_photo_booth/blob/master/promo_image.jpg?raw=true" /></p>
 
+# KNOWN ISSUES
+1. Does not work on Raspian Bullseye, due to changes affecting PiCamera.
+   USE AN OLDER VERSION OF RASPIAN INSTEAD (e.g. Buster).
+
 # Instructions
 1. Build a photo booth (see below)
 
