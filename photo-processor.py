@@ -10,15 +10,17 @@ import subprocess
 import sys
 import time
 
+
 #Need to do this early, in case import below fails:
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 
 #Additional Imports
 try:
-    from ruamel import yaml
-    from dropbox.files import WriteMode
-    from dropbox.exceptions import ApiError, AuthError, BadInputError
-    import dropbox
+    import yaml
+#    from dropbox.files import WriteMode
+#    from dropbox.exceptions import ApiError, AuthError, BadInputError
+#    import dropbox
+#TODO: FIX THE ABOVE, SUCH THAT DROPBOX IMPORTS ARE CONDITIONALLY INCLUDED (ONLY WHEN DB = ENABLED).
 
 except ImportError as missing_module:
     print('--------------------------------------------')
@@ -158,7 +160,7 @@ def do_all_expected_files_matching_this_prefix_exist(filename_prefix, total_pics
 
 def perform_image_optimisation(src_file, dest_file, perform_colour_correction=True, compression_factor='90%', debug=True):
 
-    command=['magick','convert']
+    command=['convert']
     command.extend(['-strip']) #Strip out meta tags
     command.extend(['-interlace','Plane'])
     command.extend(['-gaussian-blur','0.05'])
@@ -177,9 +179,9 @@ def perform_image_optimisation(src_file, dest_file, perform_colour_correction=Tr
 
 def create_animated_gif(src_folder_path, src_filename_prefix, dest_file, total_pics, size='200x120', duration='100', image_quality='50%', debug=True):
 
-    source_images = src_folder_path + src_filename_prefix + '_' + '[1-' + str(total_pics) + ']' + 'of' + str(total_pics) +'.jpg'
+    source_images = src_folder_path + '/' + src_filename_prefix + '_' + '[1-' + str(total_pics) + ']' + 'of' + str(total_pics) +'.jpg'
 
-    command=['magick','convert']
+    command=['convert']
     command.extend(['-quality',image_quality])
     command.extend(['-delay', duration])
     command.extend(['-resize', size])
@@ -196,16 +198,17 @@ def create_animated_gif(src_folder_path, src_filename_prefix, dest_file, total_p
 
 def create_photo_strip(folder_path, filename_prefix, total_pics, layout='2x', image_size='1920x1152', margin='20', debug=True):
 
-    source_images = folder_path + filename_prefix + '_' + '[1-' + str(total_pics) + ']' + 'of' + str(total_pics) + '.jpg'
-    output_file = folder_path + filename_prefix + '_layout_' + layout + '.jpg'
+    source_images = folder_path + '/' + filename_prefix + '_' + '[1-' + str(total_pics) + ']' + 'of' + str(total_pics) + '.jpg'
+    output_file = folder_path + '/' + filename_prefix + '_layout_' + layout + '.jpg'
 
-    command=['magick','montage']
+    command=['montage']
     command.extend(['-tile',layout])
     command.extend(['-geometry',image_size + '+' + margin + '+' + margin])
 
     command.append(source_images) #source images
     command.append(output_file) #destination
 
+    #print("Attempting command: " + command)
     result = subprocess.call(command)
 
     if debug and result != 0:
@@ -299,8 +302,8 @@ def main():
 
                         #Perform image optimisations with Imagemagick
                         print(' - Optimising image size: ' + this_file)
-                        src_file  = INPUT_DIRECTORY + this_file
-                        dest_file = PROCESSING_DIRECTORY + this_file
+                        src_file  = INPUT_DIRECTORY + '/' + this_file
+                        dest_file = PROCESSING_DIRECTORY + '/' + this_file
 
                         perform_image_optimisation(src_file, dest_file)
 
@@ -316,8 +319,9 @@ def main():
 
                         #Create animated gif
                         print(' - Creating animated thumbnail')
-                        dest_file = OUTPUT_DIRECTORY + 'thumbnails/' + filename_prefix + '.gif'
+                        dest_file = OUTPUT_DIRECTORY + '/thumbnails/' + filename_prefix + '.gif'
                         this_animated_gif = create_animated_gif(PROCESSING_DIRECTORY, filename_prefix, dest_file, total_pics)
+                        print(' - Animated thumbnail was created')
                         completed_files.append(this_animated_gif)
                         if DROPBOX_ENABLED:
                             files_to_upload_to_dropbox.append(this_animated_gif)

@@ -1,3 +1,2 @@
 picamera
-ruamel.yaml
 dropbox
