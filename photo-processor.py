@@ -17,11 +17,6 @@ REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 #Additional Imports
 try:
     import yaml
-#    from dropbox.files import WriteMode
-#    from dropbox.exceptions import ApiError, AuthError, BadInputError
-#    import dropbox
-#TODO: FIX THE ABOVE, SUCH THAT DROPBOX IMPORTS ARE CONDITIONALLY INCLUDED (ONLY WHEN DB = ENABLED).
-
 except ImportError as missing_module:
     print('--------------------------------------------')
     print('ERROR:')
@@ -34,6 +29,23 @@ except ImportError as missing_module:
         print('   python3 -m pip install -r ' + REAL_PATH + '/requirements.txt')
     print('')
     sys.exit()
+
+# Dropbox imports (conditional)
+dropbox = None
+WriteMode = None
+ApiError = None
+AuthError = None
+BadInputError = None
+
+try:
+    import dropbox
+    from dropbox.files import WriteMode
+    from dropbox.exceptions import ApiError, AuthError, BadInputError
+    DROPBOX_AVAILABLE = True
+except ImportError as missing_module:
+    DROPBOX_AVAILABLE = False
+    print('WARNING: Dropbox libraries not available. Dropbox functionality will be disabled.')
+    print('To enable Dropbox features, install: pip install dropbox')
 
 #############################
 ### Load config from file ###
@@ -93,7 +105,10 @@ def health_test_required_folders():
             os.makedirs(folder)
 
 def health_test_dropbox():
-        # Check for an access token
+    if not DROPBOX_AVAILABLE:
+        sys.exit("ERROR: Dropbox functionality is enabled but Dropbox libraries are not available.")
+    
+    # Check for an access token
     if (len(DROPBOX_TOKEN) == 0):
         sys.exit("ERROR: Looks like you didn't add your DROPBOX_TOKEN access token.")
 
@@ -226,6 +241,9 @@ def stopwatch(message):
         print('Total elapsed time for %s: %.3f' % (message, t1 - t0))
 
 def dropbox_upload(dbx, upload_path, file_path):
+    if not DROPBOX_AVAILABLE:
+        print(f"WARNING: Dropbox not available, skipping upload of {file_path}")
+        return False
 
     with open(file_path, 'rb') as f:
         # We use WriteMode=overwrite to make sure that the settings in the file are changed on upload
@@ -251,13 +269,21 @@ def main():
     """
     Main program loop
     """
+    global DROPBOX_ENABLED
+    
     #Clear the console window
     os.system('cls' if os.name == 'nt' else 'clear')
 
     #Health checks
     health_test_required_folders()
+    
+    dbx = None
     if DROPBOX_ENABLED:
-        dbx = health_test_dropbox()
+        if DROPBOX_AVAILABLE:
+            dbx = health_test_dropbox()
+        else:
+            print("WARNING: Dropbox is enabled but libraries not available. Disabling Dropbox features.")
+            DROPBOX_ENABLED = False
 
     #Begin watching
     print('Watching for new files in: ' + INPUT_DIRECTORY + '...')

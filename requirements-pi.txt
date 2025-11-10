@@ -1,0 +1,16 @@
+# Raspberry Pi specific requirements
+# These require Raspberry Pi hardware or system libraries
+
+# Camera support (Raspberry Pi OS Bullseye+)
+picamera2>=0.3.12
+
+# GPIO libraries
+RPi.GPIO>=0.7.0
+gpiozero>=1.6.0
+
+# Additional dependencies for picamera2 on Raspberry Pi
+libcamera
+python-prctl
+
+# Include core requirements
+-r requirements.txt

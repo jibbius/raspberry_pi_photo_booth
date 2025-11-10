@@ -1,2 +1,5 @@
-picamera
-dropbox
+# Core dependencies (work on all systems)
+PyYAML>=6.0
+Pillow>=8.0.0
+numpy>=1.21.0
+dropbox>=11.0.0
