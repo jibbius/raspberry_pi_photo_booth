@@ -1,0 +1,36 @@
+# Photo Processor Config:
+
+# Images to Output
+"OUTPUT_OPTIMISED_STILLS"    : True
+"OUTPUT_ANIMATED_THUMBNAILS" : True
+"OUTPUT_LAYOUTS"             : True
+
+# Directories
+"INPUT_DIRECTORY"      : "photos-IN"          # Files will be taken from here.
+"PROCESSING_DIRECTORY" : "photos-PROCESSING"  # Files will temporarily occupy this folder, whilst being processed.
+"OUTPUT_DIRECTORY"     : "photos-DONE"        # Files will be placed in this folder, once all processing is complete.
+
+# Image compression
+"IMAGE_QUALITY" : 90
+
+#Thumbnails config
+"THUMBNAILS_IMAGE_QUALITY" : 50
+"THUMBNAILS_SIZE"          : 50
+
+# List of print layouts to produce (1 column, 2 column)
+"LAYOUTS" :
+  [
+    "TILE" : "1x"
+    "SIZE" : "1920x1152"
+    "MARGIN" : "20"
+  ],[
+    "TILE" : "2x"
+    "SIZE" : "1920x1152"
+    "MARGIN" : "20"
+  ]
+
+
+# Dropbox
+"DROPBOX_ENABLED" : False
+"DROPBOX_TOKEN"   : ""
+

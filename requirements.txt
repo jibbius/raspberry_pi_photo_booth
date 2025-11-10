@@ -1,2 +1,3 @@
-picamera==1.13
-pyyaml
+picamera
+ruamel.yaml
+dropbox
