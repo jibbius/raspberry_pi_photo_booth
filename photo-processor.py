@@ -248,9 +248,15 @@ def main():
     """
     Main program loop
     """
-    health_test_required_folders()
-    dbx = health_test_dropbox()
+    #Clear the console window
+    os.system('cls' if os.name == 'nt' else 'clear')
 
+    #Health checks
+    health_test_required_folders()
+    if DROPBOX_ENABLED:
+        dbx = health_test_dropbox()
+
+    #Begin watching
     print('Watching for new files in: ' + INPUT_DIRECTORY + '...')
     while True:
         list_of_known_input_files = os.listdir(INPUT_DIRECTORY)
@@ -298,11 +304,13 @@ def main():
 
                         perform_image_optimisation(src_file, dest_file)
 
-                        #Later, we will upload this file to dropbox:
-                        files_to_upload_to_dropbox.append(this_file)
-
                         #Later, we will move this folder to our 'DONE' directory:
                         completed_files.append(this_file)
+                        
+                        #Later, we will upload this file to dropbox:
+                        if DROPBOX_ENABLED:
+                            files_to_upload_to_dropbox.append(this_file)
+
 
                     if(files_to_process and OUTPUT_ANIMATED_THUMBNAILS):
 
@@ -310,22 +318,26 @@ def main():
                         print(' - Creating animated thumbnail')
                         dest_file = OUTPUT_DIRECTORY + 'thumbnails/' + filename_prefix + '.gif'
                         this_animated_gif = create_animated_gif(PROCESSING_DIRECTORY, filename_prefix, dest_file, total_pics)
-                        files_to_upload_to_dropbox.append(this_animated_gif)
                         completed_files.append(this_animated_gif)
+                        if DROPBOX_ENABLED:
+                            files_to_upload_to_dropbox.append(this_animated_gif)
+ 
 
                     if(files_to_process and OUTPUT_ANIMATED_THUMBNAILS):
 
                         #Create photo strip ( 1x4 layout)
                         print(' - Creating photo strip (1 column layout)')
                         this_photo_strip = create_photo_strip(PROCESSING_DIRECTORY, filename_prefix, total_pics, '1x')
-                        files_to_upload_to_dropbox.append(this_photo_strip)
                         completed_files.append(this_photo_strip)
+                        if DROPBOX_ENABLED:
+                            files_to_upload_to_dropbox.append(this_photo_strip)
 
                         #Create photo strip ( 2x2 layout)
                         print(' - Creating photo strip (2 column layout)')
                         this_photo_strip = create_photo_strip(PROCESSING_DIRECTORY, filename_prefix, total_pics, '2x')
-                        files_to_upload_to_dropbox.append(this_photo_strip)
                         completed_files.append(this_photo_strip)
+                        if DROPBOX_ENABLED:
+                            files_to_upload_to_dropbox.append(this_photo_strip)
 
                     for this_file in files_to_upload_to_dropbox:
                         print(' - Uploading to dropbox: ' + this_file)
